@@ -1,0 +1,93 @@
+---
+// src/pages/wiki/[slug].astro
+import { getCollection, type CollectionEntry } from "astro:content";
+import WikiLayout from "../../layouts/WikiLayout.astro";
+
+type WikiEntry = CollectionEntry<"wiki">;
+
+export async function getStaticPaths() {
+  const entries = (await getCollection("wiki")) as WikiEntry[];
+
+  return entries.map((entry) => ({
+    params: { slug: entry.slug }, // usamos entry.slug
+    props: { entry },
+  }));
+}
+
+const { entry } = Astro.props as { entry: WikiEntry };
+const { Content } = await entry.render();
+const { title, moduleTitle, summary } = entry.data;
+const currentSlug = entry.slug;
+
+const allEntries = (await getCollection("wiki")) as WikiEntry[];
+
+const sortedEntries = allEntries.sort(
+  (a, b) => (a.data.order ?? 0) - (b.data.order ?? 0)
+);
+
+const navItems = sortedEntries.map((e) => ({
+  slug: e.slug, // aquí también
+  title: e.data.title,
+  module: e.data.module,
+  moduleTitle: e.data.moduleTitle,
+  order: e.data.order,
+}));
+
+const index = sortedEntries.findIndex((e) => e.slug === currentSlug);
+const prev = index > 0 ? sortedEntries[index - 1] : null;
+const next = index < sortedEntries.length - 1 ? sortedEntries[index + 1] : null;
+---
+
+<WikiLayout pageTitle={title} currentSlug={currentSlug} navItems={navItems}>
+  <nav class="mb-4 text-xs text-slate-400">
+    <a href="/wiki" class="hover:text-sky-300 hover:underline"> Wiki </a>
+    <span class="mx-1">/</span>
+    <span class="text-slate-300">{moduleTitle}</span>
+    <span class="mx-1">/</span>
+    <span class="text-slate-400">{title}</span>
+  </nav>
+
+  <article
+    class="prose prose-invert max-w-none
+         prose-headings:text-slate-50
+         prose-h1:text-3xl prose-h1:mb-4
+         prose-h2:text-2xl prose-h2:mt-8 prose-h2:mb-3
+         prose-p:text-slate-200 prose-p:leading-relaxed
+         prose-li:text-slate-200"
+  >
+    <h1>{title}</h1>
+    {summary && <p class="lead text-slate-300">{summary}</p>}
+    <Content />
+  </article>
+
+  <hr class="my-8 border-slate-800" />
+
+  <div class="flex items-center justify-between text-xs text-slate-400">
+    {
+      prev ? (
+        <a
+          href={`/wiki/${prev.slug}`}
+          class="flex items-center gap-1 hover:text-sky-300 hover:underline"
+        >
+          <span aria-hidden="true">←</span>
+          <span>{prev.data.title}</span>
+        </a>
+      ) : (
+        <span />
+      )
+    }
+    {
+      next ? (
+        <a
+          href={`/wiki/${next.slug}`}
+          class="flex items-center gap-1 hover:text-sky-300 hover:underline"
+        >
+          <span>{next.data.title}</span>
+          <span aria-hidden="true">→</span>
+        </a>
+      ) : (
+        <span />
+      )
+    }
+  </div>
+</WikiLayout>

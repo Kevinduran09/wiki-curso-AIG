@@ -1,0 +1,107 @@
+---
+// src/layouts/WikiLayout.astro
+export interface NavItem {
+  slug: string;
+  title: string;
+  module: string;
+  moduleTitle: string;
+  order?: number;
+}
+
+interface Props {
+  pageTitle: string;
+  currentSlug: string;
+  navItems: NavItem[];
+}
+
+const { pageTitle, currentSlug, navItems } = Astro.props;
+
+// Agrupar por módulo
+const modulesMap = new Map<string, { title: string; items: NavItem[] }>();
+
+for (const item of navItems) {
+  if (!modulesMap.has(item.module)) {
+    modulesMap.set(item.module, { title: item.moduleTitle, items: [] });
+  }
+  modulesMap.get(item.module)!.items.push(item);
+}
+
+const modules = Array.from(modulesMap.entries()).map(([id, value]) => ({
+  id,
+  title: value.title,
+  items: value.items.sort((a, b) => (a.order ?? 0) - (b.order ?? 0)),
+}));
+
+import "../styles/global.css";
+---
+
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <title>{pageTitle} | Wiki</title>
+  </head>
+  <body class="min-h-screen bg-slate-950 text-slate-100">
+    <div class="border-b border-slate-800 bg-slate-900/70 backdrop-blur">
+      <header
+        class="mx-auto flex max-w-6xl items-center justify-between px-4 py-3"
+      >
+        <a href="/" class="text-sm font-semibold tracking-wide text-slate-200">
+          Wiki del Curso
+        </a>
+        <a
+          href="/wiki"
+          class="rounded-lg border border-slate-700 px-3 py-1 text-xs text-slate-300 hover:border-sky-500 hover:text-sky-400"
+        >
+          Ver índice
+        </a>
+      </header>
+    </div>
+
+    <main class="mx-auto flex max-w-6xl gap-8 px-4 py-8">
+      <!-- Sidebar -->
+      <aside
+        class="sticky top-4 hidden h-[calc(100vh-6rem)] w-64 shrink-0 overflow-y-auto border-r border-slate-800 pr-4 md:block"
+      >
+        <h2
+          class="mb-4 text-xs font-semibold uppercase tracking-wide text-slate-400"
+        >
+          Contenidos
+        </h2>
+
+        <nav class="space-y-4 text-sm">
+          {
+            modules.map((mod) => (
+              <section>
+                <h3 class="mb-1 text-[0.7rem] font-semibold uppercase tracking-wide text-slate-500 flex-1 space-y-6">
+                  {mod.title}
+                </h3>
+                <ul class="space-y-1">
+                  {mod.items.map((item) => (
+                    <li>
+                      <a
+                        href={`/wiki/${item.slug}`}
+                        class={[
+                          "block rounded-md px-2 py-1 transition",
+                          item.slug === currentSlug
+                            ? "bg-slate-800 text-sky-300"
+                            : "text-slate-300 hover:bg-slate-900 hover:text-sky-200",
+                        ].join(" ")}
+                      >
+                        {item.title}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            ))
+          }
+        </nav>
+      </aside>
+
+      <!-- Contenido -->
+      <section class="flex-1">
+        <slot />
+      </section>
+    </main>
+  </body>
+</html>
