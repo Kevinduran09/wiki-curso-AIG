@@ -1,5 +1,6 @@
 ---
-// src/layouts/WikiLayout.astro
+import BaseLayout from "./BaseLayout.astro";
+
 export interface NavItem {
   slug: string;
   title: string;
@@ -31,77 +32,135 @@ const modules = Array.from(modulesMap.entries()).map(([id, value]) => ({
   title: value.title,
   items: value.items.sort((a, b) => (a.order ?? 0) - (b.order ?? 0)),
 }));
-
-import "../styles/global.css";
 ---
 
-<html lang="es">
-  <head>
-    <meta charset="utf-8" />
-    <title>{pageTitle} | Wiki</title>
-  </head>
-  <body class="min-h-screen bg-slate-950 text-slate-100">
-    <div class="border-b border-slate-800 bg-slate-900/70 backdrop-blur">
-      <header
-        class="mx-auto flex max-w-6xl items-center justify-between px-4 py-3"
-      >
-        <a href="/" class="text-sm font-semibold tracking-wide text-slate-200">
-          Wiki del Curso
-        </a>
+<BaseLayout title={`${pageTitle} | Wiki del Curso`}>
+  <!-- Header -->
+  <div class="border-b border-slate-800 bg-slate-900/70 backdrop-blur">
+    <header
+      class="mx-auto flex max-w-6xl items-center justify-between px-4 py-3"
+    >
+      <a href="/" class="text-sm font-semibold tracking-wide text-slate-200">
+        Wiki del Curso
+      </a>
+
+      <div class="flex items-center gap-2">
+        <!-- Botón móvil: despliega el menú arriba del contenido -->
+        <label
+          for="wiki-nav-toggle"
+          class="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-slate-700 px-3 py-1 text-xs text-slate-300 hover:border-sky-500 hover:text-sky-400 md:hidden"
+        >
+          <span>Contenido</span>
+        </label>
+
+        <!-- Botón desktop para volver al índice -->
         <a
           href="/wiki"
-          class="rounded-lg border border-slate-700 px-3 py-1 text-xs text-slate-300 hover:border-sky-500 hover:text-sky-400"
+          class="hidden rounded-lg border border-slate-700 px-3 py-1 text-xs text-slate-300 hover:border-sky-500 hover:text-sky-400 md:inline-flex"
         >
           Ver índice
         </a>
-      </header>
-    </div>
+      </div>
+    </header>
+  </div>
 
-    <main class="mx-auto flex max-w-6xl gap-8 px-4 py-8">
-      <!-- Sidebar -->
-      <aside
-        class="sticky top-4 hidden h-[calc(100vh-6rem)] w-64 shrink-0 overflow-y-auto border-r border-slate-800 pr-4 md:block"
-      >
+  <!-- Contenedor del menú móvil (encima del contenido, no overlay) -->
+  <div class="mx-auto max-w-6xl px-4 pt-3 md:hidden">
+    <input id="wiki-nav-toggle" type="checkbox" class="peer hidden" />
+
+    <div
+      class="mt-2 hidden rounded-2xl border border-slate-800 bg-slate-900/90 p-4 shadow-lg shadow-slate-950/50 peer-checked:block"
+    >
+      <div class="mb-3 flex items-center justify-between">
         <h2
-          class="mb-4 text-xs font-semibold uppercase tracking-wide text-slate-400"
+          class="text-xs font-semibold uppercase tracking-wide text-slate-400"
         >
           Contenidos
         </h2>
+        <label
+          for="wiki-nav-toggle"
+          class="cursor-pointer text-[0.7rem] uppercase tracking-wide text-slate-500 hover:text-sky-300"
+        >
+          Cerrar ✕
+        </label>
+      </div>
 
-        <nav class="space-y-4 text-sm">
-          {
-            modules.map((mod) => (
-              <section>
-                <h3 class="mb-1 text-[0.7rem] font-semibold uppercase tracking-wide text-slate-500 flex-1 space-y-6">
-                  {mod.title}
-                </h3>
-                <ul class="space-y-1">
-                  {mod.items.map((item) => (
-                    <li>
-                      <a
-                        href={`/wiki/${item.slug}`}
-                        class={[
-                          "block rounded-md px-2 py-1 transition",
-                          item.slug === currentSlug
-                            ? "bg-slate-800 text-sky-300"
-                            : "text-slate-300 hover:bg-slate-900 hover:text-sky-200",
-                        ].join(" ")}
-                      >
-                        {item.title}
-                      </a>
-                    </li>
-                  ))}
-                </ul>
-              </section>
-            ))
-          }
-        </nav>
-      </aside>
+      <nav class="space-y-4 text-sm">
+        {
+          modules.map((mod) => (
+            <section>
+              <h3 class="mb-1 text-[0.7rem] font-semibold uppercase tracking-wide text-slate-500">
+                {mod.title}
+              </h3>
+              <ul class="space-y-1">
+                {mod.items.map((item) => (
+                  <li>
+                    <a
+                      href={`/wiki/${item.slug}`}
+                      class={[
+                        "block rounded-md px-2 py-1 transition",
+                        item.slug === currentSlug
+                          ? "bg-slate-800 text-sky-300"
+                          : "text-slate-300 hover:bg-slate-900 hover:text-sky-200",
+                      ].join(" ")}
+                    >
+                      {item.title}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ))
+        }
+      </nav>
+    </div>
+  </div>
 
-      <!-- Contenido -->
-      <section class="flex-1">
-        <slot />
-      </section>
-    </main>
-  </body>
-</html>
+  <!-- Layout principal -->
+  <main class="mx-auto flex max-w-6xl gap-8 px-4 py-6">
+    <!-- Sidebar desktop -->
+    <aside
+      class="sticky top-4 hidden h-[calc(100vh-6rem)] w-64 shrink-0 overflow-y-auto border-r border-slate-800 pr-4 md:block"
+    >
+      <h2
+        class="mb-4 text-xs font-semibold uppercase tracking-wide text-slate-400"
+      >
+        Contenidos
+      </h2>
+
+      <nav class="space-y-4 text-sm">
+        {
+          modules.map((mod) => (
+            <section>
+              <h3 class="mb-1 text-[0.7rem] font-semibold uppercase tracking-wide text-slate-500">
+                {mod.title}
+              </h3>
+              <ul class="space-y-1">
+                {mod.items.map((item) => (
+                  <li>
+                    <a
+                      href={`/wiki/${item.slug}`}
+                      class={[
+                        "block rounded-md px-2 py-1 transition",
+                        item.slug === currentSlug
+                          ? "bg-slate-800 text-sky-300"
+                          : "text-slate-300 hover:bg-slate-900 hover:text-sky-200",
+                      ].join(" ")}
+                    >
+                      {item.title}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ))
+        }
+      </nav>
+    </aside>
+
+    <!-- Contenido -->
+    <section class="flex-1">
+      <slot />
+    </section>
+  </main>
+</BaseLayout>
